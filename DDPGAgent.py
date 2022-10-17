@@ -1,19 +1,9 @@
-# not checked or tested
-
 import tensorflow as tf
 tf.compat.v1.enable_eager_execution()
 from tensorflow.keras import layers
 
 
 import numpy as np
-#import random
-#from tensorflow.keras import Sequential
-#from collections import deque
-#from tensorflow.keras.layers import Dense
-#from tensorflow.keras.optimizers import Adam
-#from tensorflow.keras.models import model_from_json
-#from math import nan
-
 
 class Buffer:
 
@@ -68,8 +58,6 @@ class Buffer:
 
         return actor_model,critic_model,target_actor,target_critic
 
-     
-
     # Takes (s,a,r,s') obervation tuple as input
 
     def record(self, obs_tuple):
@@ -84,21 +72,9 @@ class Buffer:
 
         self.buffer_counter += 1
 
-    # Eager execution is turned on by default in TensorFlow 2. Decorating with tf.function allows
-    # TensorFlow to build a static graph out of the logic and computations in our function.
-    # This provides a large speed up for blocks of code that contain many small TensorFlow operations such as this one.
-
-    #@tf.function       # commented so that losses can be made available outside
-
     def update(self, state_batch, action_batch, reward_batch, next_state_batch, trainactor ):
 
         # Training and updating Actor & Critic networks.
-        # See Pseudo Code.
-        """
-        critic_optimizer = tf.keras.optimizers.Adam(self.clrate)
-        actor_optimizer = tf.keras.optimizers.Adam(self.alrate)
-        """
-
         with tf.GradientTape() as tape:
             target_actions = self.target_actor(next_state_batch, training=True)
             y = reward_batch + self.gamma * self.target_critic(
@@ -109,8 +85,7 @@ class Buffer:
             self.criticloss=critic_loss   
             self.critic_value=critic_value
             self.y=y
-            #print("critic_loss : ", critic_loss)
-
+   
             SignChk=np.zeros(len(y))
             for i in range(len(SignChk)):
                 if (y[i].numpy()>0 and critic_value[i].numpy()<0) or (y[i].numpy()<0 and critic_value[i].numpy()>0):
@@ -133,7 +108,6 @@ class Buffer:
                 # by the critic for our actions
                 actor_loss = -tf.math.reduce_mean(critic_value)
                 self.actorloss=actor_loss
-                #print("actor_loss : ", actor_loss)
             actor_grad = tape.gradient(actor_loss, self.actor_model.trainable_variables)
             self.actor_optimizer.apply_gradients(
                 zip(actor_grad, self.actor_model.trainable_variables)
@@ -194,8 +168,8 @@ def get_critic(slayer, alayer, layer2, layer3, num_states,num_actions):
     # Both are passed through seperate layer before concatenating
     concat = layers.Concatenate()([state_out, action_out])
     out = layers.Dense(layer2, activation="relu")(concat)
-    # uncomment if 3rd hidden layer is required
-    if layer3>0: out = layers.Dense(layer3, activation="relu")(out) 
+    if layer3>0: 
+        out = layers.Dense(layer3, activation="relu")(out) 
     outputs = layers.Dense(1,kernel_initializer=initval)(out)
     # Outputs single value for give state-action
     model = tf.keras.Model([state_input, action_input], outputs)
